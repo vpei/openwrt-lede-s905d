@@ -8,22 +8,18 @@ config global
 	option check_fs '0'
 
 config mount
-	option target '/boot'
-	option uuid 'E99B-4FE3'
+	option target '/mnt/mmcblk1p1'
+	option uuid '7525-D990'
 	option enabled '1'
 
 config mount
 	option target '/'
-	option uuid 'e1322c53-24da-4b95-a8a1-6de2124ac4d1'
+	option uuid '99b70123-8cf4-48e7-8586-05ccda8d7d4f'
 	option enabled '1'
 
 config mount
-	option target '/mnt/mmcblk2p3'
-	option uuid '021ad6d9-c76e-4631-aea6-765a5078d976'
+	option uuid '3e7a6160-feb0-4876-b47c-3d55defbe7c2'
 	option enabled '1'
-
-config mount
-	option target '/mnt/mmcblk2p4'
-	option uuid '5be99efb-d1fb-4ef9-b0e3-977659a0dcf7'
-	option enabled '1'
+	option target '/media/sda1'
+	option enabled_fsck '1'
 
