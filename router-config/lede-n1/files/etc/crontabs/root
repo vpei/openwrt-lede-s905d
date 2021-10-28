@@ -1,0 +1,4 @@
+*     *       *       *       *   echo `date` > /kuaicdn/app/ipes/var/log/ipes/cron.log && sh /kuaicdn/app/ipes/bin/check start >> /kuaicdn/app/ipes/var/log/ipes/cron.log  2>&1
+0 4 * * * lua /usr/share/passwall/subscribe.lua start log > /dev/null 2>&1 &
+53 3 * * * sh /usr/share/jd-dailybonus/newapp.sh -w
+51 9 * * * sh /usr/share/jd-dailybonus/newapp.sh -u

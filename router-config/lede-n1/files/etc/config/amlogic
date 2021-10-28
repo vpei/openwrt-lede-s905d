@@ -1,0 +1,12 @@
+
+config amlogic 'config'
+	option enable '1'
+	option amlogic_firmware_tag 's9xxx'
+	option amlogic_firmware_suffix '.img.gz'
+	option amlogic_kernel_path 'https://github.com/ophub/flippy-kernel/tree/main/library'
+	option amlogic_firmware_config '1'
+	option amlogic_write_bootloader '0'
+	option amlogic_shared_fstype 'ext4'
+	option amlogic_firmware_repo 'https://github.com/vpei/amlogic-s9xxx-openwrt'
+	option amlogic_kernel_branch '5.4'
+
