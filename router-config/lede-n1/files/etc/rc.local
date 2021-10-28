@@ -6,19 +6,17 @@
 
 # umount /mnt/sda1
 
-# sleep 5
+sleep 3
 
-# mount -t ext4 /dev/sdb1 /media/sda1
+mount -t ext4 /dev/sda1 /media/sda1
 
-# mount -o remount,rw /media/sda1
+mount -o remount,rw /media/sda1
 
-sleep 5
+#sleep 3
 
-mount -o remount rw /
+#/kuaicdn/app/ipes/bin/ipes start
 
-/kuaicdn/app/ipes/bin/ipes start
-
-sleep 10
+sleep 3
 
 /kuaicdn/app/ipes/bin/ipes stop
 
@@ -28,4 +26,10 @@ sleep 10
 # /usr/node/ttnode -p /media/sda1 #暂时问题没解决
 # /kuaicdn/app/ipes/bin/ipes start
 
+/usr/sbin/balethirq.pl
+/usr/sbin/balethirq.pl
+/usr/sbin/balethirq.pl
+/usr/sbin/balethirq.pl
+/usr/sbin/balethirq.pl
+/usr/sbin/balethirq.pl
 exit 0
