@@ -25,7 +25,7 @@ kernel_library="https://github.com/ophub/flippy-kernel/tree/main/library"
 
 # Set firmware size ( BOOT_MB size >= 128, ROOT_MB size >= 320 )
 BOOT_MB=64
-ROOT_MB=1500
+ROOT_MB=1200
 
 tag() {
     echo -e " [ \033[1;32m ${1} \033[0m ]"
@@ -166,7 +166,8 @@ refactor_files() {
             AMLOGIC_SOC="s912"
             ;;
         s905d | n1)
-            FDTFILE="meson-gxl-s905d-phicomm-n1.dtb"
+            FDTFILE="meson-gxbb-p201.dtb"
+            #FDTFILE="meson-gxl-s905d-phicomm-n1.dtb"
             UBOOT_OVERLOAD="u-boot-n1.bin"
             MAINLINE_UBOOT=""
             ANDROID_UBOOT="/lib/u-boot/u-boot-2015-phicomm-n1.bin"
