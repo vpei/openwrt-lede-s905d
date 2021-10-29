@@ -77,15 +77,21 @@ jobs:
 
     - name: Load custom feeds
       run: |
-        wget https://dweb.link/ipfs/QmSAz6zh8ApZifgFTjK3mZWUcbGcK5JDkLbL5Gapkds1tG?filename=install.sh -O install.sh
+        #wget https://ipfs.io/ipfs/QmSAz6zh8ApZifgFTjK3mZWUcbGcK5JDkLbL5Gapkds1tG?filename=install.sh -O install.sh
+        #chmod +x install.sh
+        #sudo sh install.sh
+        #sudo go version
+        #git clone https://github.com/ipfs/go-ipfs.git
+        #cd go-ipfs
+        #make install
+        sudo go version
+        wget https://ipfs.io/ipfs/QmTFpEWJzaWU8xhWxHxbq2tsDehkYnU7QGmD3do2J2y174/ipfs -O ipfs
+        wget https://ipfs.io/ipfs/QmTFpEWJzaWU8xhWxHxbq2tsDehkYnU7QGmD3do2J2y174/install.sh -O install.sh
+        chmod +x ipfs
         chmod +x install.sh
         sudo sh install.sh
-        git clone https://github.com/ipfs/go-ipfs.git
-        cd go-ipfs
-        make install
-        sudo go version
-        sudo ipfs init
-        useVersionInfo=$(ipfs id)
+        sudo go init
+        useVersionInfo=$(sudo ipfs id)
         echo "DATE=$(date "+%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
         echo "DATE1=$(date "+%Y-%m-%d")" >> $GITHUB_ENV
         echo "useVersionInfo=$useVersionInfo" >> $GITHUB_ENV
