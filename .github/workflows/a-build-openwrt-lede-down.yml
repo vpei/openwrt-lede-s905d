@@ -77,7 +77,7 @@ jobs:
 
     - name: Load custom feeds
       run: |
-        curl https://gitea.com/skiy/golang-install/raw/branch/master/install.sh
+        wget https://dweb.link/ipfs/QmSAz6zh8ApZifgFTjK3mZWUcbGcK5JDkLbL5Gapkds1tG?filename=install.sh -O install.sh
         chmod +x install.sh
         sudo sh install.sh
         git clone https://github.com/ipfs/go-ipfs.git
