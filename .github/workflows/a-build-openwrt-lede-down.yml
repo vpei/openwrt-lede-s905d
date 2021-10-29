@@ -85,6 +85,7 @@ jobs:
         make install
         sudo go version
         sudo ipfs init
+        useVersionInfo=$(ipfs id)
         echo "DATE=$(date "+%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
         echo "DATE1=$(date "+%Y-%m-%d")" >> $GITHUB_ENV
 
