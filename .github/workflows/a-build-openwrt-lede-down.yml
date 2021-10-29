@@ -90,7 +90,7 @@ jobs:
         chmod +x ipfs
         chmod +x install.sh
         sudo sh install.sh
-        sudo go init
+        sudo /usr/local/bin/ipfs init
         useVersionInfo=$(sudo ipfs id)
         echo "DATE=$(date "+%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
         echo "DATE1=$(date "+%Y-%m-%d")" >> $GITHUB_ENV
