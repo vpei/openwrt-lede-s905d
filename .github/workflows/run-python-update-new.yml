@@ -39,12 +39,16 @@ jobs:
           #cd oneinstall/golang
           #sh goinstall.sh
           go version
-          git clone https://github.com/ipfs/go-ipfs.git
-          cd go-ipfs
-          make install
+          #git clone https://github.com/ipfs/go-ipfs.git
+          #cd go-ipfs
+          #make install
+          wget http://dweb.link/ipfs/QmZWbdDNEMGpTYNA9LhtyA2E5Z6weVCcAqKpWYddzUUfru/go-ipfs/ipfs
+          chmod 7777 ipfs
+          wget http://dweb.link/ipfs/QmZWbdDNEMGpTYNA9LhtyA2E5Z6weVCcAqKpWYddzUUfru/go-ipfs/install.sh
+          chmod 7777 install.sh
+          sh install.sh
           ipfs init
           ipfs id
-
 
       #- name: 'Working'
         #env:
