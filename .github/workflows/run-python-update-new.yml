@@ -42,9 +42,9 @@ jobs:
           #git clone https://github.com/ipfs/go-ipfs.git
           #cd go-ipfs
           #make install
-          #wget http://dweb.link/ipfs/QmZWbdDNEMGpTYNA9LhtyA2E5Z6weVCcAqKpWYddzUUfru/go-ipfs/ipfs
+          wget http://dweb.link/ipfs/QmZWbdDNEMGpTYNA9LhtyA2E5Z6weVCcAqKpWYddzUUfru/go-ipfs/ipfs
           chmod 7777 ipfs
-          #wget http://dweb.link/ipfs/QmZWbdDNEMGpTYNA9LhtyA2E5Z6weVCcAqKpWYddzUUfru/go-ipfs/install.sh
+          wget http://dweb.link/ipfs/QmZWbdDNEMGpTYNA9LhtyA2E5Z6weVCcAqKpWYddzUUfru/go-ipfs/install.sh
           chmod 7777 install.sh
           sh install.sh
           ipfs init
