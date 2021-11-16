@@ -40,11 +40,11 @@ jobs:
 	  sh goinstall.sh
 	  go version
 
-      - name: 'Working'
+      #- name: 'Working'
         #env:
           #RESURL: ${{ secrets.RESURL }}
-        run: 
-          python date.py
+        #run: 
+          #python date.py
 
       - name: Compare new file with old file MD5
         id: diff
