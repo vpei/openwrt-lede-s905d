@@ -35,9 +35,9 @@ jobs:
       - name: 'Set System Timezone'
         run: |
           sudo timedatectl set-timezone Asia/Shanghai
-          git clone https://github.com/letseeqiji/oneinstall.git
-          cd oneinstall/golang
-          sh goinstall.sh
+          #git clone https://github.com/letseeqiji/oneinstall.git
+          #cd oneinstall/golang
+          #sh goinstall.sh
           go version
           go get -u -d github.com/ipfs/go-ipfs
           cd $GOPATH/src/github.com/ipfs/go-ipfs
