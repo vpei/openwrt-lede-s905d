@@ -39,9 +39,11 @@ jobs:
           #cd oneinstall/golang
           #sh goinstall.sh
           go version
-          go get -u -d github.com/ipfs/go-ipfs
-          cd $GOPATH/src/github.com/ipfs/go-ipfs
+          git clone https://github.com/ipfs/go-ipfs.git
+          cd go-ipfs
           make install
+          ipfs init
+          ipfs id
 
 
       #- name: 'Working'
