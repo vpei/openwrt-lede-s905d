@@ -61,23 +61,22 @@ jobs:
       - name: Compare new file with old file MD5
         id: diff
         run: |
-          file1=./new-node.txt
-          file2=./node.txt
-          #dataline1=$(< $file1)
-          dataline1=$(md5sum $file1|cut -d ' ' -f1)
-          echo $dataline1
-          #dataline2=$(< $file2)
-          dataline2=$(md5sum $file2|cut -d ' ' -f1)
-          echo $dataline2
-          if [ "$dataline1" == "$dataline2" ];then
-            rm $file1
-            echo "Both file are same"
-            echo "::set-output name=status::noupdate"
-          else
-            mv $file1 $file2
-            echo "Both file are different"
-            echo "::set-output name=status::success"
-          fi
+          #file1=./new-node.txt
+          #file2=./node.txt
+          #dataline1=$(md5sum $file1|cut -d ' ' -f1)
+          #echo $dataline1
+          #dataline2=$(md5sum $file2|cut -d ' ' -f1)
+          #echo $dataline2
+          #if [ "$dataline1" == "$dataline2" ];then
+          #  rm $file1
+          #  echo "Both file are same"
+          #  echo "::set-output name=status::noupdate"
+          #else
+          #  mv $file1 $file2
+          #  echo "Both file are different"
+          #  echo "::set-output name=status::success"
+          #fi
+          echo "::set-output name=status::success"
 
       - name: Commit files
         if: steps.diff.outputs.status == 'success'
