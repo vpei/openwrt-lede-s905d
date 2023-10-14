@@ -1,0 +1,35 @@
+
+config system
+	option ttylogin '0'
+	option urandom_seed '0'
+	option log_proto 'udp'
+	option zonename 'Asia/Hong Kong'
+	option timezone 'HKT-8'
+	option conloglevel '1'
+	option cronloglevel '9'
+	option log_size '8'
+	option hostname 'X-NET'
+	option description 'X-NET-Description'
+	option notes 'X-NET-Notes'
+
+config timeserver 'ntp'
+	list server '0.openwrt.pool.ntp.org'
+	list server '1.openwrt.pool.ntp.org'
+	list server '2.openwrt.pool.ntp.org'
+	list server '3.openwrt.pool.ntp.org'
+
+config led
+	option name 'red'
+	option sysfs 'red:system'
+	option trigger 'netdev'
+	list mode 'link'
+	list mode 'tx'
+	list mode 'rx'
+	option dev 'eth0'
+
+config led
+	option name 'white'
+	option sysfs 'white:status'
+	option trigger 'default-on'
+	option default '1'
+

@@ -1,0 +1,86 @@
+
+config interface 'loopback'
+	option proto 'static'
+	option ipaddr '127.0.0.1'
+	option netmask '255.0.0.0'
+	option device 'lo'
+
+config globals 'globals'
+	option packet_steering '1'
+	option ula_prefix '10:0:4::/64'
+
+config interface 'lan'
+	option proto 'static'
+	option netmask '255.255.255.0'
+	option ipaddr '192.168.4.254'
+	option ip6ifaceid '::254'
+	option ip6assign '64'
+	list dns '192.168.4.254'
+	option device 'br-lan'
+
+config device
+	option name 'eth0'
+	option mtu '1492'
+	option macaddr 'C4:2F:AD:10:42:13'
+
+config interface 'wan'
+	option proto 'pppoe'
+	option username 'hfi45593'
+	option password '958199'
+	option service 'X-NET'
+	option ipv6 'auto'
+	option force_link '1'
+	option peerdns '0'
+	list dns '1.1.1.1'
+	list dns '1.1.1.2'
+	option ip6assign '64'
+	option ip6ifaceid '::254'
+	option device 'eth1'
+
+config interface 'zerotier'
+	option proto 'dhcp'
+	option device 'ztly5s626i'
+
+config interface 'wan6'
+	option proto 'dhcpv6'
+	option reqaddress 'try'
+	option reqprefix 'auto'
+	option peerdns '0'
+	list dns '2001:4860:4860::8888'
+	option ip6assign '64'
+	option ip6ifaceid '::254'
+	option defaultroute '0'
+	option device 'eth1'
+
+config device
+	option name 'eth1'
+	option mtu '1492'
+	option macaddr 'C4:2F:AD:10:42:13'
+
+config device
+	option name 'pppoe-wan'
+	option macaddr 'C4:2F:AD:10:42:13'
+	option mtu '1500'
+	option mtu6 '1500'
+
+config device
+	option name 'ztly5s626i'
+	option mtu '1492'
+	option mtu6 '1492'
+
+config device
+	option name 'br-lan'
+	option type 'bridge'
+	option bridge_empty '1'
+	list ports 'erspan0'
+	list ports 'eth0'
+	option macaddr 'C4:2F:AD:10:42:13'
+	option acceptlocal '1'
+	option promisc '1'
+
+config device
+	option name 'erspan0'
+	option mtu '1492'
+	option mtu6 '1492'
+	option macaddr 'C4:2F:AD:10:42:13'
+

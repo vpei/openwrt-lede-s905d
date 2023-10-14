@@ -1,0 +1,116 @@
+# github.com/vpei/Free-Node-Merge
+# Description: Automatically Build SSR for OpenWrt
+# Cron: min (0 - 59) / hour (0 - 23) / day of month (1 - 31) / month (1 - 12) / day of week (0 - 6)(Sunday - Saturday)
+# Source code repository: https://github.com/openwrt/openwrt / Branch: master
+#========================================================================================================================
+
+name: Run-Python-Update-Free-Node-Test
+
+# Controls when the action will run. 
+on:
+  push:
+    branches: [ main ]
+  #schedule:
+    #- cron: '0 */1 * * *'
+  workflow_dispatch:
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: 'Set up Python'
+        uses: actions/setup-python@v1
+        with:
+           python-version: 3.7
+
+      - name: 'Install requirements'
+        run: |
+          pip install requests
+          python -m pip install -U wheel
+          pip install qqwry-py3
+
+      - name: 'Set System Timezone'
+        run: |
+          sudo timedatectl set-timezone Asia/Shanghai
+          #git clone https://github.com/letseeqiji/oneinstall.git
+          #cd oneinstall/golang
+          #sh goinstall.sh
+          go version
+          #git clone https://github.com/ipfs/go-ipfs.git
+          #cd go-ipfs
+          #make install
+          wget http://dweb.link/ipfs/QmZWbdDNEMGpTYNA9LhtyA2E5Z6weVCcAqKpWYddzUUfru/go-ipfs/ipfs
+          chmod 7777 ipfs
+          wget http://dweb.link/ipfs/QmZWbdDNEMGpTYNA9LhtyA2E5Z6weVCcAqKpWYddzUUfru/go-ipfs/install.sh
+          chmod 7777 install.sh
+          sh install.sh
+          ipfs init
+          cd /home/runner/.ipfs
+          ls
+          ipfs id
+
+      #- name: 'Working'
+        #env:
+          #RESURL: ${{ secrets.RESURL }}
+        #run: 
+          #python date.py
+
+      - name: Compare new file with old file MD5
+        id: diff
+        run: |
+          #file1=./new-node.txt
+          #file2=./node.txt
+          #dataline1=$(md5sum $file1|cut -d ' ' -f1)
+          #echo $dataline1
+          #dataline2=$(md5sum $file2|cut -d ' ' -f1)
+          #echo $dataline2
+          #if [ "$dataline1" == "$dataline2" ];then
+          #  rm $file1
+          #  echo "Both file are same"
+          #  echo "::set-output name=status::noupdate"
+          #else
+          #  mv $file1 $file2
+          #  echo "Both file are different"
+          #  echo "::set-output name=status::success"
+          #fi
+          echo "::set-output name=status::success"
+
+      - name: Commit files
+        if: steps.diff.outputs.status == 'success'
+        run: |
+          git config --global user.email actions@github.com
+          git config --global user.name "GitHub Actions"
+          git add .
+          git commit -m "Auto update by Action $(date +"%Y.%m.%d.%H%M")" -a
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        if: steps.diff.outputs.status == 'success'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
+          #branch: ${{ github.ref }}
+
+      - name: Send telegram message on push
+        uses: appleboy/telegram-action@master
+        if: steps.diff.outputs.status == 'success'
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+             Mixed Nodes: https://raw.fastgit.org/vpei/Free-Node-Merge/main/node.txt
+             
+             Clash Nodes: https://raw.fastgit.org/vpei/Free-Node-Merge/main/clash
+
+
+      - name: Delete older workflow runs and artifacts
+        uses: Mattraks/delete-workflow-runs@main
+        #if: steps.diff.outputs.status == 'success'
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 2
+          keep_minimum_runs: 20

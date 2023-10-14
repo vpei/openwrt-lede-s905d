@@ -1,0 +1,201 @@
+#========================================================================================================================
+# https://github.com/ophub/amlogic-s9xxx-openwrt
+# Description: Use Releases file to packaging
+# Cron: min (0 - 59) / hour (0 - 23) / day of month (1 - 31) / month (1 - 12) / day of week (0 - 6)(Sunday - Saturday)
+#========================================================================================================================
+
+name: Use-Releases-file-to-Packaging
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection'
+        required: false
+        default: 'false'
+  #schedule:
+    #- cron: '0 22 * * *'
+
+env:
+  UPLOAD_FIRMWARE: true
+  UPLOAD_BIN_DIR: true
+  UPLOAD_COWTRANSFER: true
+  UPLOAD_WETRANSFER: true
+  UPLOAD_RELEASE: true
+  RECENT_LASTEST: 3
+  TZ: Asia/Shanghai
+
+
+  REPO_URL: https://github.com/coolsnowwolf/lede
+  REPO_BRANCH: master
+  FEEDS_CONF: feeds.conf.default
+  CONFIG_FILE: ARMv8/lede-gcc11.config
+  DIY_P1_SH: diy-part1.sh
+  DIY_P2_SH: diy-part2.sh
+  FILE_NAME: armv8_mini
+  PRODUCT_NAME: ARMv8_mini
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install $(curl -fsSL git.io/ubuntu-2004-openwrt)
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        echo "COMPILE_STARTINGTIME=$(date +"%Y.%m.%d.%H%M")" >> $GITHUB_ENV
+
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
+
+
+    - name: Clone source code
+      working-directory: /workdir
+      run: |
+        df -hT $PWD
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        cd openwrt
+        useVersionInfo=$(git show -s --date=short --format="Author: %an<br/>date: %cd<br/>commit: %s<br/>commit hash: %H")
+        echo "useVersionInfo=$useVersionInfo" >> $GITHUB_ENV
+        echo "DATE=$(date "+%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
+        echo "DATE1=$(date "+%Y-%m-%d")" >> $GITHUB_ENV
+
+
+    - name: Build OpenWrt firmware
+      id: build
+      if: (!cancelled())
+      run: |
+        [ -d openwrt-armvirt ] || mkdir -p openwrt-armvirt
+        curl -s "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases" | grep -o "openwrt_s9xxx_lede.*/openwrt-armvirt-.*.tar.gz" | head -n 1 > DOWNLOAD_ARMVIRT
+        [ -s DOWNLOAD_ARMVIRT ] && wget -q -P openwrt-armvirt https://github.com/${GITHUB_REPOSITORY}/releases/download/$(cat DOWNLOAD_ARMVIRT)
+        sudo chmod +x make
+        #echo "https://github.com/${GITHUB_REPOSITORY}/releases/download/${DOWNLOAD_ARMVIRT}"
+        #https://github.com/vpei/amlogic-s9xxx-openwrt/releases/download/OpenWrt_s9xxx_lede_2021.10.24.0333/openwrt-armvirt-64-default-rootfs.tar.gz
+        #sudo ./make -d -b s905x3_s905x2_s905x_s905w_s905d_s922x_s912 -k 5.10.70_5.4.150
+        sudo ./make -d -b s905d -k 5.4.150
+        curl -s "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases" | grep -o "openwrt_s9xxx_lede.*/ipk.tar.gz" | head -n 1 > DOWNLOAD_IPK
+        [ -s DOWNLOAD_IPK ] && wget -q -P out https://github.com/${GITHUB_REPOSITORY}/releases/download/$(cat DOWNLOAD_IPK)
+        echo "PACKAGED_OUTPUTPATH=${PWD}/out" >> $GITHUB_ENV
+        echo "PACKAGED_OUTPUTDATE=$(date +"%Y.%m.%d.%H%M")" >> $GITHUB_ENV
+        echo "::set-output name=status::success"
+
+    - name: SSH connection to Actions @ Ctrl+C to enter, Ctrl+D to exit
+      uses: P3TERX/ssh2actions@main
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+    #- name: Upload artifact to Actions
+    #  uses: kittaakos/upload-artifact-as-is@master
+    #  if: steps.build.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+    #  with:
+    #    path: ${{ env.PACKAGED_OUTPUTPATH }}/
+
+    - name: Upload OpenWrt bin directory to Actions
+      uses: actions/upload-artifact@v2
+      if: steps.build.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true' && !cancelled()
+      with:
+        name: openwrt_bin_armvirt_64_${{ env.FILE_DATE }}
+        path: openwrt/bin
+        retention-days: ${{ env.RECENT_LASTEST }}
+        if-no-files-found: ignore
+
+    - name: Upload OpenWrt Firmware to cowtransfer
+      if: steps.build.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
+      run: |
+        curl -fsSL git.io/file-transfer | sh
+        ./transfer cow --block 2621440 -s -p 64 --no-progress ${{ env.PACKAGED_OUTPUTPATH }}/{openwrt_s9xxx_*,openwrt_n1_*} 2>&1 | tee cowtransfer.log
+        echo "COW_URL=$(cat cowtransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_ENV
+
+    - name: Upload OpenWrt Firmware to WeTransfer
+      if: steps.build.outputs.status == 'success' && env.UPLOAD_WETRANSFER == 'true' && !cancelled()
+      run: |
+        curl -fsSL git.io/file-transfer | sh
+        ./transfer wet -s -p 16 --no-progress ${{ env.PACKAGED_OUTPUTPATH }}/{openwrt_s9xxx_*,openwrt_n1_*} 2>&1 | tee wetransfer.log
+        echo "WET_URL=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_ENV
+
+    - name: Upload OpenWrt Firmware to Release
+      id: release
+      uses: ncipollo/release-action@v1
+      if: steps.build.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true' && !cancelled()
+      with:
+        tag: openwrt_s9xxx_lede_${{ env.PACKAGED_OUTPUTDATE }}
+        #tag: ${{ env.FILE_NAME }}
+        artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/*
+        #name: R${{ env.DATE }} for ${{ env.FILE_NAME }}
+        allowUpdates: true
+        commit: main
+        #token: ${{ secrets.RELEASES_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        body: |
+          This is OpenWrt firmware for Amlogic S9xxx STB
+          * Firmware information
+          Default IP: 192.168.1.1
+          Default username: root
+          Default password: password
+          Default WIFI name: OpenWrt
+          Default WIFI password: none
+          Install to EMMC: Login to OpenWrt → System → Amlogic Service → Install OpenWrt
+
+          默认IP：192.168.1.1 默认密码：password (WiFi密码同）
+          当前使用版本:【编译前的最后一次➦[主源码](https://github.com/coolsnowwolf/lede)更新记录】
+          此为**自用精简包**，和F大本人集成的插件有**较大**差异。
+          因变动较大，从60及其以下版本升级到61或更高版本建议**全新刷入**或者**不保留配置**进行升级。
+          常见问题及注意事项请参考恩山F大➦[最新帖](https://www.right.com.cn/forum/thread-4076037-1-1.html)
+          需要**高大全**版请到 高大全➦[下载](https://github.com/breakings/OpenWrt/releases/tag/ARMv8)
+          ${{ env.useVersionInfo }}
+
+    - name: Delete workflow runs
+      uses: GitRML/delete-workflow-runs@main
+      with:
+        retain_days: 30
+        keep_minimum_runs: 3
+
+    - name: Remove old Releases
+      uses: dev-drprasad/delete-older-releases@v0.2.0
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      with:
+        #repo:
+        keep_latest: 30
+        #delete_tag_pattern:
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Telegram notification
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        message: |
+          打包时间：${{ env.DATE }}
+          更新信息：${{ env.useVersionInfo }}
+          ${{ env.PRODUCT_NAME }} 打包完成
+
+    - name: send telegram message on push
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        message: |
+          ${{ github.actor }} created commit:
+          Commit message: ${{ github.event.commits[0].message }}
+          
+          Repository: ${{ github.repository }}
+          
+          See changes: https://github.com/${{ github.repository }}/commit/${{github.sha}}
+

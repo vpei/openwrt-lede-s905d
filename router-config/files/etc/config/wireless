@@ -1,0 +1,17 @@
+
+config wifi-device 'radio0'
+	option type 'mac80211'
+	option path '1e140000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0'
+	option cell_density '0'
+	option country 'CN'
+	option noscan '1'
+
+config wifi-iface 'default_radio0'
+	option device 'radio0'
+	option network 'lan'
+	option mode 'ap'
+	option ssid 'H-WiFi'
+	option key '23456701'
+	option ieee80211w '1'
+	option encryption 'psk2'
+

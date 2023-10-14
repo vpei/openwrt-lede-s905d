@@ -1,0 +1,176 @@
+#========================================================================================================================
+# https://github.com/ophub/amlogic-s9xxx-openwrt
+# Description: Automatically Build OpenWrt for Amlogic S9xxx STB
+# Cron: min (0 - 59) / hour (0 - 23) / day of month (1 - 31) / month (1 - 12) / day of week (0 - 6)(Sunday - Saturday)
+# Source code repository: https://github.com/coolsnowwolf/lede / Branch: master
+#========================================================================================================================
+
+name: Build-OpenWrt-Lede-2021-Down
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+  #schedule:
+    #- cron: '0 17 * * 0'
+
+env:
+  REPO_URL: https://github.com/coolsnowwolf/lede
+  REPO_BRANCH: master
+  FEEDS_CONF: router-config/lede-n1/feeds.conf.default
+  CONFIG_FILE: router-config/lede-n1/.config
+  DIY_P1_SH: router-config/lede-n1/diy-part1.sh
+  DIY_P2_SH: router-config/lede-n1/diy-part2.sh
+  UPLOAD_BIN_DIR: true
+  UPLOAD_ARMVIRT: true
+  UPLOAD_FIRMWARE: true
+  UPLOAD_COWTRANSFER: true
+  UPLOAD_WETRANSFER: true
+  UPLOAD_RELEASE: true
+  DELETE_RELEASE: true
+  DELETE_ARTIFACTS: true
+  RECENT_LASTEST: 3
+  TZ: Asia/Shanghai
+  FILE_NAME: armv8_mini
+  PRODUCT_NAME: ARMv8_mini
+
+jobs:
+  Build:
+    runs-on: ubuntu-20.04
+    if: github.event.repository.owner.id == github.event.sender.id
+    outputs:
+      OPENWRTROOT: ${{ steps.update.outputs.OPENWRTROOT }}
+      PLATFORM: ${{ steps.compile.outputs.PLATFORM }}
+      TARGET: ${{ steps.compile.outputs.TARGET }}
+      SUBTARGET: ${{ steps.compile.outputs.SUBTARGET }}
+      FIRMWARE: ${{ steps.compile.outputs.FIRMWARE }}
+      GENERATE_STATUS: ${{ steps.generate.outputs.GENERATE_STATUS }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install $(curl -fsSL git.io/ubuntu-2004-openwrt)
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
+        echo "COMPILE_STARTINGTIME=$(date +"%Y.%m.%d.%H%M")" >> $GITHUB_ENV
+
+    - name: Clone source code
+      working-directory: /workdir
+      run: |
+        df -hT $PWD
+        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        cd openwrt
+        useVersionInfo=$(git show -s --date=short --format="Author: %an<br/>date: %cd<br/>commit: %s<br/>commit hash: %H")
+        echo "useVersionInfo=$useVersionInfo" >> $GITHUB_ENV
+        echo "DATE=$(date "+%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
+        echo "DATE1=$(date "+%Y-%m-%d")" >> $GITHUB_ENV
+
+    - name: Load custom feeds
+      run: |
+        #wget https://ipfs.io/ipfs/QmSAz6zh8ApZifgFTjK3mZWUcbGcK5JDkLbL5Gapkds1tG?filename=install.sh -O install.sh
+        #chmod +x install.sh
+        #sudo sh install.sh
+        #sudo go version
+        #git clone https://github.com/ipfs/go-ipfs.git
+        #cd go-ipfs
+        #make install
+        sudo go version
+        wget https://ipfs.io/ipfs/QmTFpEWJzaWU8xhWxHxbq2tsDehkYnU7QGmD3do2J2y174/ipfs -O ipfs
+        wget https://ipfs.io/ipfs/QmTFpEWJzaWU8xhWxHxbq2tsDehkYnU7QGmD3do2J2y174/install.sh -O install.sh
+        chmod +x ipfs
+        chmod +x install.sh
+        sudo sh install.sh
+        sudo /usr/local/bin/ipfs init
+        useVersionInfo=$(sudo ipfs id)
+        echo "DATE=$(date "+%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
+        echo "DATE1=$(date "+%Y-%m-%d")" >> $GITHUB_ENV
+        echo "useVersionInfo=$useVersionInfo" >> $GITHUB_ENV
+
+
+    - name: Telegram notification
+      uses: appleboy/telegram-action@master
+      if: env.UPLOAD_RELEASE == 'true' && env.DELETE_RELEASE == 'true' && !cancelled()
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        message: |
+          打包时间1：${{ env.DATE }} 
+          打包时间1：${{ env.DATE1 }} 
+          更新信息：${{ env.useVersionInfo }}
+          ${{ env.PRODUCT_NAME }} 打包完成。
+
+    - name: Check space usage
+      if: (!cancelled())
+      run: df -hT
+
+    - name: Upload OpenWrt Firmware to Release
+      id: release
+      uses: ncipollo/release-action@v1
+      if: steps.Build.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true' && !cancelled()
+      with:
+        tag: openwrt_s9xxx_lede_${{ env.PACKAGED_OUTPUTDATE }}
+        #tag: ${{ env.FILE_NAME }}
+        artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/*
+        #name: R${{ env.DATE }} for ${{ env.FILE_NAME }}
+        allowUpdates: true
+        commit: main
+        #token: ${{ secrets.RELEASES_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        body: |
+          This is OpenWrt firmware for Amlogic S9xxx STB
+          * Firmware information
+          Default IP: 192.168.1.1
+          Default username: root
+          Default password: password
+          Default WIFI name: OpenWrt
+          Default WIFI password: none
+          Install to EMMC: Login to OpenWrt → System → Amlogic Service → Install OpenWrt
+          默认IP：192.168.1.1 默认密码：password (WiFi密码同）
+          当前使用版本:【编译前的最后一次➦[主源码](https://github.com/coolsnowwolf/lede)更新记录】
+          此为**自用精简包**，和F大本人集成的插件有**较大**差异。
+          因变动较大，从60及其以下版本升级到61或更高版本建议**全新刷入**或者**不保留配置**进行升级。
+          常见问题及注意事项请参考恩山F大➦[最新帖](https://www.right.com.cn/forum/thread-4076037-1-1.html)
+          需要**高大全**版请到 高大全➦[下载](https://github.com/breakings/OpenWrt/releases/tag/ARMv8)
+          ${{ env.useVersionInfo }}
+
+    - name: Delete workflow runs
+      uses: GitRML/delete-workflow-runs@main
+      if: env.DELETE_ARTIFACTS == 'true' && !cancelled()
+      with:
+        retain_days: 30
+        keep_minimum_runs: $RECENT_LASTEST
+
+    - name: Remove old Releases
+      uses: dev-drprasad/delete-older-releases@v0.2.0
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      with:
+        #repo:
+        keep_latest: 30
+        #delete_tag_pattern:
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Send telegram message on push
+      uses: appleboy/telegram-action@master
+      if: env.UPLOAD_RELEASE == 'true' && env.DELETE_RELEASE == 'true' && !cancelled()
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        message: |
+          ${{ github.actor }} created commit:
+          Commit message: ${{ github.event.commits[0].message }}
+          
+          Repository: ${{ github.repository }}
+          
+          See changes: https://github.com/${{ github.repository }}/commit/${{github.sha}}
